@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora de Parcelas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary-color: #21335b;
+      --accent-color: #FFC176;
+      --dark-color: #303030;
+      --gray-50: #e6eaf0;
+      --gray-100: #dde2e8;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --green-600: #16a34a;
+      --red-600: #dc2626;
+      --white: #ffffff;
+      --radius: 8px;
+      --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* ====== TEMA ESCURO ====== */
+    [data-theme="dark"] {
+      --primary-color: #4F75FF;
+      --accent-color: #FFB84D;
+      --dark-color: #ffffff;
+      --gray-50: #0f172a;
+      --gray-100: #1e293b;
+      --gray-200: #334155;
+      --gray-300: #475569;
+      --gray-400: #64748b;
+      --gray-500: #94a3b8;
+      --gray-700: #cbd5e1;
+      --gray-900: #f1f5f9;
+      --white: #1e293b;
+      --shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Ajustes específicos para números no tema escuro */
+    [data-theme="dark"] .value-input,
+    [data-theme="dark"] .months-input {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .value-display {
+      color: #e2e8f0 !important;
+    }
+
+    [data-theme="dark"] .payment-option {
+      color: #ffffff !important;
+    }
+
+    [data-theme="dark"] .result-details {
+      color: var(--gray-400) !important;
+    }
+
+    [data-theme="dark"] .calculator-card {
+      background: #1a202c !important;
+    }
+
+    /* Escuro: fundo e borda do resultado de sucesso menos vibrantes */
+    [data-theme="dark"] .result-container.success {
+      background: var(--gray-100) !important;
+      border-color: var(--gray-300) !important;
+    }
+
+    [data-theme="dark"] .result-header {
+      border-bottom-color: var(--gray-400) !important;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--gray-50);
+      color: var(--dark-color);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ====== NAVBAR ====== */
+    .navbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      padding: 12px 0;
+    }
+
+    .navbar-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      font-size: 1.125rem;
+      color: var(--primary-color);
+    }
+    .navbar__logo-img {
+      height: 80px;
+      width: auto;
+      display: block;
+    }
+    .logo-dark { display: none; }
+    [data-theme="dark"] .logo-light { display: none; }
+    [data-theme="dark"] .logo-dark { display: block; }
+
+    .navbar__links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .navbar__links a {
+      color: var(--gray-500);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+
+    .navbar__links a:hover {
+      color: var(--primary-color);
+    }
+
+    /* ====== BOTÃO TEMA ====== */
+    .theme-toggle {
+      background: var(--gray-100);
+      border: 1px solid var(--gray-300);
+      border-radius: 20px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--gray-500);
+      margin-left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .theme-toggle:hover {
+      background: var(--gray-200);
+      color: var(--primary-color);
+    }
+
+    .theme-icon {
+      font-size: 0.875rem;
+    }
+
+    /* ====== MAIN CONTAINER ====== */
+    .container {
+      max-width: 680px;
+      margin: 24px auto;
+      padding: 0 24px;
+    }
+
+    .calculator-card {
+      background: #f0f0f0;
+      border-radius: var(--radius);
+      padding: 32px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--gray-200);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--primary-color);
+      margin-bottom: 4px;
+    }
+
+    .header p {
+      color: var(--gray-500);
+      font-size: 0.875rem;
+    }
+
+    /* ====== FORM SECTIONS ====== */
+    .form-section {
+      margin-bottom: 24px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--dark-color);
+      margin-bottom: 8px;
+    }
+
+    /* ====== SLIDER STYLES ====== */
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 6px;
+    }
+
+    .slider {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--gray-200);
+      outline: none;
+      -webkit-appearance: none;
+      cursor: pointer;
+    }
+
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .slider::-webkit-slider-thumb:hover {
+      background: var(--accent-color);
+      transform: scale(1.1);
+    }
+
+    .slider::-moz-range-thumb {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--primary-color);
+      border: none;
+      cursor: pointer;
+    }
+
+    .value-input {
+      width: 140px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      transition: border-color 0.2s;
+      background: var(--white);
+    }
+
+    .value-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    .value-display {
+      font-size: 0.75rem;
+      color: #1a1a1a;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* ====== PAYMENT OPTIONS ====== */
+    .payment-options {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .payment-option {
+      padding: 12px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      background: var(--white);
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.875rem;
+      color: #1a1a1a;
+    }
+
+    .payment-option:hover {
+      border-color: var(--primary-color);
+      background: var(--gray-50);
+    }
+
+    .payment-option.active {
+      border-color: var(--accent-color);
+      background: var(--accent-color);
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    /* ====== MONTHS INPUT ====== */
+    .months-input {
+      width: 140px;
+      padding: 8px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      transition: border-color 0.2s;
+      background: var(--white);
+      text-align: center;
+    }
+
+    .months-input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    /* ====== CALCULATE BUTTON ====== */
+    .calculate-btn {
+      width: auto;
+      padding: 14px 80px;
+      border: none;
+      border-radius: var(--radius);
+      background: var(--primary-color);
+      color: var(--white);
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin: 24px auto 0;
+      display: block;
+    }
+
+    .calculate-btn:hover {
+      background: var(--accent-color);
+      color: var(--primary-color);
+    }
+
+    .calculate-btn:active {
+      transform: translateY(1px);
+    }
+
+    /* ====== RESULT ====== */
+    .result-container {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      text-align: center;
+      min-height: 60px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s;
+    }
+
+    .result-container.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .result-container.success {
+      background: #f0fdf4;
+      border-color: var(--accent-color);
+    }
+
+    .result-container.error {
+      background: #fef2f2;
+      border-color: var(--red-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--gray-300);
+    }
+
+    .result-text {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--dark-color);
+      margin: 0;
+    }
+
+    .result-text.success {
+      color: var(--primary-color);
+    }
+
+    .result-text.error {
+      color: var(--red-600);
+    }
+
+    .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary-color);
+      margin-top: 6px;
+    }
+
+    .result-details {
+      font-size: 0.8rem;
+      color: #4a4a4a;
+      font-weight: 500;
+      line-height: 1.5;
+      text-align: center;
+      margin: 0 auto;
+    }
+
+    .result-details div {
+      margin-bottom: 4px;
+      padding: 2px 0;
+    }
+
+    /* ====== RESPONSIVE ====== */
+    @media (max-width: 768px) {
+      .container {
+        padding: 0 16px;
+        margin: 16px auto;
+      }
+
+      .calculator-card {
+        padding: 24px 20px;
+      }
+
+      .header h1 {
+        font-size: 1.5rem;
+      }
+
+      .navbar-content {
+        padding: 0 16px;
+      }
+
+      .navbar__links {
+        gap: 16px;
+      }
+
+      .input-group {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .value-input {
+        width: 100%;
+      }
+
+      .payment-options {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .months-input {
+        width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .navbar__links {
+        display: none;
+      }
+
+      .theme-toggle {
+        margin-left: 0;
+        font-size: 0.75rem;
+        padding: 4px 8px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .calculator-card {
+        padding: 20px 16px;
+      }
+
+      .header {
+        margin-bottom: 20px;
+      }
+
+      .form-section {
+        margin-bottom: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ====== NAVBAR ====== -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar__logo">
+        <img src="./lcp-logo.png" alt="Life Capital Partners" class="navbar__logo-img logo-light">
+        <img src="./lcp-logo-dark.png" alt="Life Capital Partners" class="navbar__logo-img logo-dark">
+      </div>
+      <div style="display: flex; align-items: center;">
+        <div class="navbar__links">
+          <a href="https://lifecapitalpartners.com.br/" target="_blank" rel="noopener">Site</a>
+        </div>
+        <button class="theme-toggle" id="themeToggle">
+          <span class="theme-icon">🌙</span>
+          <span class="theme-text">Escuro</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ====== CALCULADORA ====== -->
+  <div class="container">
+    <div class="calculator-card">
+      <div class="header">
+        <h1>Calculadora de Parcelas</h1>
+        <p>Simule o financiamento do seu terreno</p>
+      </div>
+
+      <!-- 1. Valor do terreno -->
+      <div class="form-section">
+        <label class="form-label">Valor do Terreno</label>
+        <div class="input-group">
+          <input type="range" id="terrenoRange" class="slider" min="0" max="1000000" step="1000" value="100000">
+          <input type="number" id="terrenoInput" class="value-input" value="100000" min="0" max="1000000">
+        </div>
+        <div class="value-display" id="terrenoDisplay">R$ 100.000,00</div>
+      </div>
+
+      <!-- 2. Valor da entrada -->
+      <div class="form-section">
+        <label class="form-label">Valor da Entrada</label>
+        <div class="input-group">
+          <input type="range" id="entradaRange" class="slider" min="0" max="1000000" step="1000" value="0">
+          <input type="number" id="entradaInput" class="value-input" value="0" min="0" max="1000000">
+        </div>
+        <div class="value-display" id="entradaDisplay">R$ 0,00</div>
+      </div>
+
+      <!-- 3. Parcelas da entrada -->
+      <div class="form-section">
+        <label class="form-label">Parcelar Entrada Em</label>
+        <div class="payment-options">
+          <button class="payment-option active" data-parc="1">1x</button>
+          <button class="payment-option" data-parc="2">2x</button>
+          <button class="payment-option" data-parc="3">3x</button>
+        </div>
+      </div>
+
+      <!-- 4. Meses de financiamento -->
+      <div class="form-section">
+        <div class="input-group">
+          <label class="form-label" style="margin-bottom: 0; flex: 1;">Prazo do Financiamento (meses)</label>
+          <input type="number" id="mesesInput" class="months-input" value="240" min="1" max="300" step="1" placeholder="Digite o número de meses">
+        </div>
+      </div>
+
+      <!-- Botão calcular -->
+      <button class="calculate-btn" id="btnCalcular">
+        Calcular Parcela
+      </button>
+
+      <!-- Resultado -->
+      <div class="result-container" id="resultado">
+        <div class="result-text">Clique em "Calcular" para ver o resultado</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SCRIPT ====== -->
+  <script>
+    /* Utilitário para formato BRL */
+    const formatBRL = v => Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(v);
+
+    /* Referências aos elementos */
+    const terrenoRange = document.getElementById('terrenoRange');
+    const terrenoInput = document.getElementById('terrenoInput');
+    const terrenoDisplay = document.getElementById('terrenoDisplay');
+    const entradaRange = document.getElementById('entradaRange');
+    const entradaInput = document.getElementById('entradaInput');
+    const entradaDisplay = document.getElementById('entradaDisplay');
+    const mesesInput = document.getElementById('mesesInput');
+    const btnsParcelas = document.querySelectorAll('.payment-option');
+    const btnCalcular = document.getElementById('btnCalcular');
+    const resultadoBox = document.getElementById('resultado');
+
+    /* Estado da aplicação */
+    let parcelasEntrada = 1;
+
+    /* Atualizar visual do slider */
+    const updateSliderFill = (rangeEl) => {
+      const perc = ((rangeEl.value - rangeEl.min) * 100) / (rangeEl.max - rangeEl.min);
+      rangeEl.style.background = `linear-gradient(to right, var(--primary-color) 0%, var(--primary-color) ${perc}%, var(--gray-200) ${perc}%, var(--gray-200) 100%)`;
+    };
+
+    /* Sincronizar slider com input e atualizar display */
+    const syncRangeAndInput = (rangeEl, inputEl, displayEl) => {
+      const syncToInput = () => {
+        inputEl.value = rangeEl.value;
+        displayEl.textContent = formatBRL(rangeEl.value);
+        updateSliderFill(rangeEl);
+        updateEntradaMax();
+      };
+      
+      const syncToRange = () => {
+        rangeEl.value = inputEl.value;
+        displayEl.textContent = formatBRL(inputEl.value);
+        updateSliderFill(rangeEl);
+        updateEntradaMax();
+      };
+      
+      rangeEl.addEventListener('input', syncToInput);
+      inputEl.addEventListener('input', syncToRange);
+      updateSliderFill(rangeEl);
+    };
+
+    /* Atualizar limite máximo da entrada baseado no valor do terreno */
+    const updateEntradaMax = () => {
+      const valorTerreno = +terrenoInput.value;
+      entradaRange.max = valorTerreno;
+      if (+entradaInput.value > valorTerreno) {
+        entradaInput.value = valorTerreno;
+        entradaRange.value = valorTerreno;
+        entradaDisplay.textContent = formatBRL(valorTerreno);
+        updateSliderFill(entradaRange);
+      }
+    };
+
+    /* Inicializar sincronização */
+    syncRangeAndInput(terrenoRange, terrenoInput, terrenoDisplay);
+    syncRangeAndInput(entradaRange, entradaInput, entradaDisplay);
+   
+    /* Pokayoke: impedir valores negativos e fora dos limites nos inputs e sincronizar visual */
+    [terrenoInput, entradaInput].forEach(inputEl => {
+      inputEl.addEventListener('input', () => {
+        const min = parseFloat(inputEl.min) || 0;
+        const max = parseFloat(inputEl.max) || Infinity;
+        let v = parseFloat(inputEl.value);
+        if (isNaN(v)) return;
+        if (v < min) v = min;
+        else if (v > max) v = max;
+        inputEl.value = v;
+        // Atualizar slider e display correspondentes
+        const rangeEl = inputEl === terrenoInput ? terrenoRange : entradaRange;
+        const displayEl = inputEl === terrenoInput ? terrenoDisplay : entradaDisplay;
+        rangeEl.value = v;
+        updateSliderFill(rangeEl);
+        displayEl.textContent = formatBRL(v);
+      });
+    });
+
+    /* Gerenciar botões de parcelas */
+    btnsParcelas.forEach(btn => {
+      btn.addEventListener('click', () => {
+        btnsParcelas.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        parcelasEntrada = +btn.dataset.parc;
+      });
+    });
+
+    /* Função PMT para cálculo da tabela Price */
+    const pmt = (rate, nper, pv) => {
+      return rate === 0 ? -(pv / nper) : -(pv * rate) / (1 - Math.pow(1 + rate, -nper));
+    };
+
+    /* Taxa de juros mensal */
+    const TAXA = 0.009488; // 0,9488% a.m.
+
+    /* Função principal de cálculo */
+    const calcular = () => {
+      const valorTerreno = +terrenoInput.value || 0;
+      const valorEntrada = +entradaInput.value || 0;
+      const meses = Math.max(+mesesInput.value || 0, 1);
+
+      /* Calcular valor presente da entrada parcelada */
+      const parcelaEntrada = valorEntrada / parcelasEntrada;
+      let valorPresenteEntrada = 0;
+      
+      for (let k = 0; k < parcelasEntrada; k++) {
+        valorPresenteEntrada += parcelaEntrada / Math.pow(1 + TAXA, k);
+      }
+
+      const valorFinanciado = Math.max(valorTerreno - valorPresenteEntrada, 0);
+
+      if (valorFinanciado <= 0) {
+        showResult('Entrada cobre todo o valor do terreno.', 'success');
+        return;
+      }
+
+      const parcelaFinanc = Math.abs(pmt(TAXA, meses, valorFinanciado));
+
+      /* Mostrar resultado - APENAS a parcela do financiamento */
+      showResult(parcelaFinanc, 'success', {
+        valorTerreno,
+        valorEntrada,
+        valorPresenteEntrada,
+        valorFinanciado,
+        parcelaEntrada,
+        parcelaFinanciamento: parcelaFinanc,
+        meses
+      });
+    };
+
+    /* Exibir resultado */
+    const showResult = (value, type = 'success', details = null) => {
+      const resultText = resultadoBox.querySelector('.result-text');
+      
+      // Remover classes anteriores
+      resultadoBox.classList.remove('show', 'success', 'error');
+      resultText.classList.remove('success', 'error');
+      
+      setTimeout(() => {
+        if (type === 'error') {
+          resultadoBox.classList.add('error');
+          resultText.classList.add('error');
+          resultadoBox.innerHTML = `<div class="result-text error">${value}</div>`;
+        } else {
+          resultadoBox.classList.add('success');
+          resultText.classList.add('success');
+          
+          let html = `
+            <div class="result-header">
+              <div class="result-text success">Parcela estimada:</div>
+              <div class="result-value">${formatBRL(value)}/mês</div>
+            </div>
+          `;
+          
+          if (details) {
+            html += `
+              <div class="result-details">
+                <div><strong>Valor do terreno:</strong> ${formatBRL(details.valorTerreno)}</div>
+                <div><strong>Entrada:</strong> ${formatBRL(details.valorEntrada)} (${parcelasEntrada}x de ${formatBRL(details.parcelaEntrada)})</div>
+                <div><strong>Valor financiado:</strong> ${formatBRL(details.valorFinanciado)} em ${details.meses} meses</div>
+              </div>
+            `;
+          }
+          
+          resultadoBox.innerHTML = html;
+        }
+        
+        resultadoBox.classList.add('show');
+      }, 100);
+    };
+
+    /* Evento do botão calcular */
+    btnCalcular.addEventListener('click', (e) => {
+      e.preventDefault();
+      calcular();
+    });
+
+    /* Inicialização */
+    updateEntradaMax();
+    
+    /* Tecla Enter */
+    document.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        btnCalcular.click();
+      }
+    });
+
+    /* ====== TOGGLE TEMA ====== */
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.querySelector('.theme-icon');
+    const themeText = document.querySelector('.theme-text');
+
+    // Verificar tema salvo ou usar tema claro como padrão
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    // Atualizar botão baseado no tema atual
+    const updateThemeButton = (theme) => {
+      if (theme === 'dark') {
+        themeIcon.textContent = '☀️';
+        themeText.textContent = 'Claro';
+      } else {
+        themeIcon.textContent = '🌙';
+        themeText.textContent = 'Escuro';
+      }
+    };
+
+    // Inicializar botão
+    updateThemeButton(savedTheme);
+
+    // Toggle tema
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeButton(newTheme);
+    });
+  </script>
+</body>
+</html>
