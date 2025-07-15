@@ -531,8 +531,8 @@
       <div class="form-section">
         <label class="form-label">Valor do Terreno</label>
         <div class="input-group">
-          <input type="range" id="terrenoRange" class="slider" min="0" max="1000000" step="1000" value="100000">
-          <input type="text" id="terrenoInput" class="value-input" value="100.000,00" min="0" max="1000000">
+          <input type="range" id="terrenoRange" class="slider" min="0" max="3000000" step="1000" value="100000">
+          <input type="text" id="terrenoInput" class="value-input" value="100.000,00" min="0" max="3000000">
         </div>
         <div class="value-display" id="terrenoDisplay">R$ 100.000,00</div>
       </div>
@@ -541,8 +541,8 @@
       <div class="form-section">
         <label class="form-label">Valor da Entrada</label>
         <div class="input-group">
-          <input type="range" id="entradaRange" class="slider" min="0" max="1000000" step="1000" value="0">
-          <input type="text" id="entradaInput" class="value-input" value="0,00" min="0" max="1000000">
+          <input type="range" id="entradaRange" class="slider" min="0" max="3000000" step="1000" value="0">
+          <input type="text" id="entradaInput" class="value-input" value="0,00" min="0" max="3000000">
         </div>
         <div class="value-display" id="entradaDisplay">R$ 0,00</div>
       </div>
@@ -561,7 +561,7 @@
       <div class="form-section">
         <div class="input-group">
           <label class="form-label" style="margin-bottom: 0; flex: 1;">Prazo do Financiamento (meses)</label>
-          <input type="number" id="mesesInput" class="months-input" value="240" min="1" max="300" step="1" placeholder="Digite o número de meses">
+          <input type="number" id="mesesInput" class="months-input" value="240" min="1" max="300" step="1" placeholder="Digite o número de meses (máx. 300)">
         </div>
       </div>
 
@@ -743,7 +743,15 @@
       const valorFinanciado = Math.max(valorTerreno - valorPresenteEntrada, 0);
 
       if (valorFinanciado <= 0) {
-        showResult('Entrada cobre todo o valor do terreno.', 'success');
+        showResult(0, 'success', {
+          valorTerreno,
+          valorEntrada,
+          valorPresenteEntrada,
+          valorFinanciado: 0,
+          parcelaEntrada,
+          parcelaFinanciamento: 0,
+          meses
+        });
         return;
       }
 
@@ -781,7 +789,7 @@
           let html = `
             <div class="result-header">
               <div class="result-text success">Parcela estimada:</div>
-              <div class="result-value">${formatBRL(value)}/mês</div>
+              <div class="result-value">${value === 0 ? 'R$ 0,00' : formatBRL(value) + '/mês'}</div>
             </div>
           `;
           
@@ -790,7 +798,7 @@
               <div class="result-details">
                 <div><strong>Valor do terreno:</strong> ${formatBRL(details.valorTerreno)}</div>
                 <div><strong>Entrada:</strong> ${formatBRL(details.valorEntrada)} (${parcelasEntrada}x de ${formatBRL(details.parcelaEntrada)})</div>
-                <div><strong>Valor financiado:</strong> ${formatBRL(details.valorFinanciado)} em ${details.meses} meses</div>
+                <div><strong>Valor financiado:</strong> ${details.valorFinanciado === 0 ? 'Nenhum financiamento necessário' : formatBRL(details.valorFinanciado) + ' em ' + details.meses + ' meses'}</div>
               </div>
             `;
           }
@@ -811,6 +819,16 @@
     /* Inicialização */
     updateEntradaMax();
     
+    /* Validação do campo de meses */
+    mesesInput.addEventListener('input', () => {
+      let valor = parseInt(mesesInput.value);
+      if (valor > 300) {
+        mesesInput.value = 300;
+      } else if (valor < 1) {
+        mesesInput.value = 1;
+      }
+    });
+
     /* Tecla Enter */
     document.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') {
