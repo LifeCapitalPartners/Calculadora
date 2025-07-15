@@ -567,7 +567,7 @@
 
       <!-- Botão calcular -->
       <button class="calculate-btn" id="btnCalcular">
-        Calcular Parcela
+        Calcular Parcelas
       </button>
 
       <!-- Resultado -->
@@ -625,6 +625,8 @@
 
     /* Sincronizar slider com input e atualizar display */
     const syncRangeAndInput = (rangeEl, inputEl, displayEl) => {
+      let formatTimeout;
+      
       const syncToInput = () => {
         const numericValue = parseInt(rangeEl.value);
         inputEl.value = formatInt(numericValue);
@@ -636,15 +638,35 @@
       const syncToRange = () => {
         const numericValue = parseIntPt(inputEl.value);
         rangeEl.value = numericValue;
-        inputEl.value = formatInt(numericValue);
         displayEl.textContent = formatBRL(numericValue);
         updateSliderFill(rangeEl);
         updateEntradaMax();
       };
       
+      const formatWithDelay = () => {
+        clearTimeout(formatTimeout);
+        formatTimeout = setTimeout(() => {
+          const numericValue = parseIntPt(inputEl.value);
+          const cursorPosition = inputEl.selectionStart;
+          const oldLength = inputEl.value.length;
+          
+          inputEl.value = formatInt(numericValue);
+          
+          // Manter posição do cursor
+          const newLength = inputEl.value.length;
+          const newPosition = cursorPosition + (newLength - oldLength);
+          inputEl.setSelectionRange(newPosition, newPosition);
+        }, 2500); // Formatar após 2,5 segundos de pausa
+      };
+      
       rangeEl.addEventListener('input', syncToInput);
       inputEl.addEventListener('input', syncToRange);
-      inputEl.addEventListener('blur', syncToRange); // Formatar ao sair do campo
+      inputEl.addEventListener('input', formatWithDelay);
+      inputEl.addEventListener('blur', () => {
+        clearTimeout(formatTimeout);
+        const numericValue = parseIntPt(inputEl.value);
+        inputEl.value = formatInt(numericValue);
+      });
       updateSliderFill(rangeEl);
     };
 
@@ -667,7 +689,7 @@
    
     /* Pokayoke: impedir valores negativos e fora dos limites nos inputs e sincronizar visual */
     [terrenoInput, entradaInput].forEach(inputEl => {
-      inputEl.addEventListener('input', () => {
+      inputEl.addEventListener('blur', () => {
         const numericValue = parseIntPt(inputEl.value);
         const min = 0;
         const max = parseFloat(inputEl.max) || Infinity;
