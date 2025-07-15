@@ -724,7 +724,7 @@
     };
 
     /* Taxa de juros mensal */
-    const TAXA = 0.009488; // 0,9488% a.m.
+    const TAXA = 0.0094888; // 0,9488% a.m.
 
     /* Função principal de cálculo */
     const calcular = () => {
@@ -732,40 +732,44 @@
       const valorEntrada = parseIntPt(entradaInput.value) || 0;
       const meses = Math.max(+mesesInput.value || 0, 1);
 
-      /* Calcular valor presente da entrada parcelada */
-      const parcelaEntrada = valorEntrada / parcelasEntrada;
-      let valorPresenteEntrada = 0;
-      
-      for (let k = 0; k < parcelasEntrada; k++) {
-        valorPresenteEntrada += parcelaEntrada / Math.pow(1 + TAXA, k);
-      }
+      /* 1. Lógica de carência */
+      const carencia = parcelasEntrada === 1 ? 0
+                    : parcelasEntrada === 2 ? 1
+                    : 2;
 
-      const valorFinanciado = Math.max(valorTerreno - valorPresenteEntrada, 0);
+      /* 2. Variáveis básicas */
+      const TAXA = 0.0094888; // 0,9488% a.m.
+      const P0 = valorTerreno - valorEntrada; // principal a financiar
+      const n = Math.max(+mesesInput.value, 1); // prazo digitado (1-300)
 
-      if (valorFinanciado <= 0) {
+      if (P0 <= 0) {
         showResult(0, 'success', {
           valorTerreno,
           valorEntrada,
-          valorPresenteEntrada,
           valorFinanciado: 0,
-          parcelaEntrada,
+          parcelaEntrada: valorEntrada / parcelasEntrada,
           parcelaFinanciamento: 0,
-          meses
+          meses: n,
+          carencia
         });
         return;
       }
 
-      const parcelaFinanc = Math.abs(pmt(TAXA, meses, valorFinanciado));
+      /* 3. Saldo devedor após a carência */
+      const saldoCarencia = P0 * Math.pow(1 + TAXA, carencia);
+
+      /* 4. Prestação mensal (sistema Price) */
+      const parcelaFinanc = Math.abs(pmt(TAXA, n, -saldoCarencia));
 
       /* Mostrar resultado - APENAS a parcela do financiamento */
       showResult(parcelaFinanc, 'success', {
         valorTerreno,
         valorEntrada,
-        valorPresenteEntrada,
-        valorFinanciado,
-        parcelaEntrada,
+        valorFinanciado: P0,
+        parcelaEntrada: valorEntrada / parcelasEntrada,
         parcelaFinanciamento: parcelaFinanc,
-        meses
+        meses: n,
+        carencia
       });
     };
 
@@ -799,6 +803,7 @@
                 <div><strong>Valor do terreno:</strong> ${formatBRL(details.valorTerreno)}</div>
                 <div><strong>Entrada:</strong> ${formatBRL(details.valorEntrada)} (${parcelasEntrada}x de ${formatBRL(details.parcelaEntrada)})</div>
                 <div><strong>Valor financiado:</strong> ${details.valorFinanciado === 0 ? 'Nenhum financiamento necessário' : formatBRL(details.valorFinanciado) + ' em ' + details.meses + ' meses'}</div>
+                <div><strong>Carência:</strong> ${details.carencia === 0 ? 'Sem carência' : details.carencia + ' mês' + (details.carencia > 1 ? 'es' : '')}</div>
               </div>
             `;
           }
