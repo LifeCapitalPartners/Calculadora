@@ -532,7 +532,7 @@
         <label class="form-label">Valor do Terreno</label>
         <div class="input-group">
           <input type="range" id="terrenoRange" class="slider" min="0" max="1000000" step="1000" value="100000">
-          <input type="number" id="terrenoInput" class="value-input" value="100000" min="0" max="1000000">
+          <input type="text" id="terrenoInput" class="value-input" value="100.000,00" min="0" max="1000000">
         </div>
         <div class="value-display" id="terrenoDisplay">R$ 100.000,00</div>
       </div>
@@ -542,7 +542,7 @@
         <label class="form-label">Valor da Entrada</label>
         <div class="input-group">
           <input type="range" id="entradaRange" class="slider" min="0" max="1000000" step="1000" value="0">
-          <input type="number" id="entradaInput" class="value-input" value="0" min="0" max="1000000">
+          <input type="text" id="entradaInput" class="value-input" value="0,00" min="0" max="1000000">
         </div>
         <div class="value-display" id="entradaDisplay">R$ 0,00</div>
       </div>
@@ -579,11 +579,28 @@
 
   <!-- ====== SCRIPT ====== -->
   <script>
-    /* Utilitário para formato BRL */
+    /* Utilitários para formato brasileiro */
     const formatBRL = v => Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
     }).format(v);
+
+    /* Formatar número inteiro com separador de milhar e decimais */
+    const formatInt = (value) => {
+      if (!value || isNaN(value)) return '0,00';
+      return parseInt(value).toLocaleString('pt-BR') + ',00';
+    };
+
+    /* Parsear número brasileiro para inteiro */
+    const parseIntPt = (value) => {
+      if (!value) return 0;
+      // Remove todos os caracteres não numéricos exceto vírgula e ponto
+      const cleanValue = value.replace(/[^\d,.-]/g, '');
+      // Remove pontos (separadores de milhar) e substitui vírgula por ponto
+      const normalizedValue = cleanValue.replace(/\./g, '').replace(',', '.');
+      const parsed = parseFloat(normalizedValue);
+      return isNaN(parsed) ? 0 : Math.abs(parsed);
+    };
 
     /* Referências aos elementos */
     const terrenoRange = document.getElementById('terrenoRange');
@@ -609,30 +626,35 @@
     /* Sincronizar slider com input e atualizar display */
     const syncRangeAndInput = (rangeEl, inputEl, displayEl) => {
       const syncToInput = () => {
-        inputEl.value = rangeEl.value;
-        displayEl.textContent = formatBRL(rangeEl.value);
+        const numericValue = parseInt(rangeEl.value);
+        inputEl.value = formatInt(numericValue);
+        displayEl.textContent = formatBRL(numericValue);
         updateSliderFill(rangeEl);
         updateEntradaMax();
       };
       
       const syncToRange = () => {
-        rangeEl.value = inputEl.value;
-        displayEl.textContent = formatBRL(inputEl.value);
+        const numericValue = parseIntPt(inputEl.value);
+        rangeEl.value = numericValue;
+        inputEl.value = formatInt(numericValue);
+        displayEl.textContent = formatBRL(numericValue);
         updateSliderFill(rangeEl);
         updateEntradaMax();
       };
       
       rangeEl.addEventListener('input', syncToInput);
       inputEl.addEventListener('input', syncToRange);
+      inputEl.addEventListener('blur', syncToRange); // Formatar ao sair do campo
       updateSliderFill(rangeEl);
     };
 
     /* Atualizar limite máximo da entrada baseado no valor do terreno */
     const updateEntradaMax = () => {
-      const valorTerreno = +terrenoInput.value;
+      const valorTerreno = parseIntPt(terrenoInput.value);
       entradaRange.max = valorTerreno;
-      if (+entradaInput.value > valorTerreno) {
-        entradaInput.value = valorTerreno;
+      const valorEntrada = parseIntPt(entradaInput.value);
+      if (valorEntrada > valorTerreno) {
+        entradaInput.value = formatInt(valorTerreno);
         entradaRange.value = valorTerreno;
         entradaDisplay.textContent = formatBRL(valorTerreno);
         updateSliderFill(entradaRange);
@@ -646,13 +668,16 @@
     /* Pokayoke: impedir valores negativos e fora dos limites nos inputs e sincronizar visual */
     [terrenoInput, entradaInput].forEach(inputEl => {
       inputEl.addEventListener('input', () => {
-        const min = parseFloat(inputEl.min) || 0;
+        const numericValue = parseIntPt(inputEl.value);
+        const min = 0;
         const max = parseFloat(inputEl.max) || Infinity;
-        let v = parseFloat(inputEl.value);
-        if (isNaN(v)) return;
+        
+        let v = numericValue;
         if (v < min) v = min;
         else if (v > max) v = max;
-        inputEl.value = v;
+        
+        inputEl.value = formatInt(v);
+        
         // Atualizar slider e display correspondentes
         const rangeEl = inputEl === terrenoInput ? terrenoRange : entradaRange;
         const displayEl = inputEl === terrenoInput ? terrenoDisplay : entradaDisplay;
@@ -681,8 +706,8 @@
 
     /* Função principal de cálculo */
     const calcular = () => {
-      const valorTerreno = +terrenoInput.value || 0;
-      const valorEntrada = +entradaInput.value || 0;
+      const valorTerreno = parseIntPt(terrenoInput.value) || 0;
+      const valorEntrada = parseIntPt(entradaInput.value) || 0;
       const meses = Math.max(+mesesInput.value || 0, 1);
 
       /* Calcular valor presente da entrada parcelada */
