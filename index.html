@@ -585,10 +585,13 @@
       currency: 'BRL'
     }).format(v);
 
-    /* Formatar número inteiro com separador de milhar e decimais */
-    const formatInt = (value) => {
+    /* Formatar número com separador de milhar e decimais */
+    const formatDecimal = (value) => {
       if (!value || isNaN(value)) return '0,00';
-      return parseInt(value).toLocaleString('pt-BR') + ',00';
+      return parseFloat(value).toLocaleString('pt-BR', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     };
 
     /* Parsear número brasileiro para inteiro */
@@ -629,7 +632,7 @@
       
       const syncToInput = () => {
         const numericValue = parseInt(rangeEl.value);
-        inputEl.value = formatInt(numericValue);
+        inputEl.value = formatDecimal(numericValue);
         displayEl.textContent = formatBRL(numericValue);
         updateSliderFill(rangeEl);
         updateEntradaMax();
@@ -650,7 +653,7 @@
           const cursorPosition = inputEl.selectionStart;
           const oldLength = inputEl.value.length;
           
-          inputEl.value = formatInt(numericValue);
+          inputEl.value = formatDecimal(numericValue);
           
           // Manter posição do cursor
           const newLength = inputEl.value.length;
@@ -665,7 +668,7 @@
       inputEl.addEventListener('blur', () => {
         clearTimeout(formatTimeout);
         const numericValue = parseIntPt(inputEl.value);
-        inputEl.value = formatInt(numericValue);
+        inputEl.value = formatDecimal(numericValue);
       });
       updateSliderFill(rangeEl);
     };
@@ -676,7 +679,7 @@
       entradaRange.max = valorTerreno;
       const valorEntrada = parseIntPt(entradaInput.value);
       if (valorEntrada > valorTerreno) {
-        entradaInput.value = formatInt(valorTerreno);
+        entradaInput.value = formatDecimal(valorTerreno);
         entradaRange.value = valorTerreno;
         entradaDisplay.textContent = formatBRL(valorTerreno);
         updateSliderFill(entradaRange);
@@ -698,7 +701,7 @@
         if (v < min) v = min;
         else if (v > max) v = max;
         
-        inputEl.value = formatInt(v);
+        inputEl.value = formatDecimal(v);
         
         // Atualizar slider e display correspondentes
         const rangeEl = inputEl === terrenoInput ? terrenoRange : entradaRange;
