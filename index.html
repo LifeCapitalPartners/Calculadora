@@ -806,7 +806,6 @@
                 <div><strong>Valor do terreno:</strong> ${formatBRL(details.valorTerreno)}</div>
                 <div><strong>Entrada:</strong> ${formatBRL(details.valorEntrada)} (${parcelasEntrada}x de ${formatBRL(details.parcelaEntrada)})</div>
                 <div><strong>Valor financiado:</strong> ${details.valorFinanciado === 0 ? 'Nenhum financiamento necessário' : formatBRL(details.valorFinanciado) + ' em ' + details.meses + ' meses'}</div>
-                <div><strong>Carência:</strong> ${details.carencia === 0 ? 'Sem carência' : details.carencia + ' mês' + (details.carencia > 1 ? 'es' : '')}</div>
               </div>
             `;
           }
